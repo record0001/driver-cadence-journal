@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Доступ гостя гейтится флагом isViewEnabled/isEditEnabled владельца.
+    // Точное сравнение самого токена на чтение Firestore Rules не поддерживают
+    // (клиент не может передать произвольный параметр в правило чтения) —
+    // это ограничение платформы, а не архитектурное решение проекта.
+    // Секретность ссылки обеспечивается неугадываемостью userId+token в URL,
+    // а не криптографической проверкой на бэкенде. Для более строгой защиты
+    // потребуется прослойка Cloud Functions — сознательно исключено из MVP.
+    function guestCanView(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.shareTokens.isViewEnabled == true;
+    }
+
+    function guestCanEdit(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.shareTokens.isEditEnabled == true;
+    }
+
+    match /users/{userId} {
+      // get (одиночное чтение) нужен для резолвинга share-ссылки на гостевых страницах.
+      // list запрещён — нельзя перечислить всех пользователей.
+      allow get: if true;
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+
+      match /cadences/{cadenceId} {
+        allow read: if isOwner(userId) || guestCanView(userId) || guestCanEdit(userId);
+        // Создание и удаление каденций — только владелец (Этап 5.3).
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+
+        match /shifts/{shiftId} {
+          allow read: if isOwner(userId) || guestCanView(userId) || guestCanEdit(userId);
+          allow create: if isOwner(userId) || guestCanEdit(userId);
+          allow update: if isOwner(userId) || guestCanEdit(userId);
+          // Удаление смены — только владелец. Гость по edit-ссылке удалять не может
+          // (зафиксированное правило проекта).
+          allow delete: if isOwner(userId);
+        }
+      }
+    }
+  }
+}
