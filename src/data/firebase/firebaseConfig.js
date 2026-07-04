@@ -33,7 +33,7 @@ const firebaseConfig = {
 
 export const firebaseApp = initializeApp(firebaseConfig);
 
-alert(auth.config);
+alert(firebaseApp);
 
 // Offline-first: локальный кэш Firestore, автоматическая очередь несинхронизированных
 // записей. persistentSingleTabManager — сознательное упрощение MVP: persistence
