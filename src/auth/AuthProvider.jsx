@@ -10,37 +10,24 @@ export function AuthProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      // Состояние авторизации разблокирует UI СРАЗУ, синхронно.
+      // Firestore (ensureUserDocExists) сюда намеренно не подмешивается —
+      // ни его скорость, ни его ошибки не должны задерживать вход в приложение.
       setUser(firebaseUser);
-
-      /*
-      if (firebaseUser) {
-        await ensureUserDocExists(firebaseUser);
-      }
-*/
-
-
-if (firebaseUser) {
-  alert("Пользователь Firebase: " + firebaseUser.email);
-
-  try {
-    await ensureUserDocExists(firebaseUser);
-    alert("Создание документа пользователя завершено");
-  } catch (error) {
-    alert(
-      "Ошибка создания пользователя:\n" +
-      error.message
-    );
-  }
-}
-
-setIsLoading(false);
-
-
-
-      /*******************/
-      
       setIsLoading(false);
+
+      if (firebaseUser) {
+        // Фоновая операция: не await, свой catch. Если создание документа
+        // задержится или упадёт (например, из-за конкуренции вкладок за
+        // offline-персистентность) — пользователь всё равно уже в приложении;
+        // при следующей успешной попытке (например, при следующем действии,
+        // требующем Firestore) документ будет создан повторно, т.к.
+        // ensureUserDocExists идемпотентна (проверяет exists() перед созданием).
+        ensureUserDocExists(firebaseUser).catch((error) => {
+          console.error('Не удалось создать документ пользователя:', error);
+        });
+      }
     });
     return unsubscribe;
   }, []);
