@@ -12,7 +12,8 @@ export function LoginPage() {
     } catch (err) {
       // Раньше ошибка терялась молча (unhandled rejection) — именно это
       // выглядело как "экран мигает и возвращается без объяснений".
-      console.error('Ошибка входа через Google:', err.code, err.message);
+     // console.error('Ошибка входа через Google:', err.code, err.message);
+      alert('Ошибка входа через Google:', err.code, err.message);
       setError(describeAuthError(err.code));
     }
   };
