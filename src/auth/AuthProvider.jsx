@@ -12,9 +12,34 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+
+      /*
       if (firebaseUser) {
         await ensureUserDocExists(firebaseUser);
       }
+*/
+
+
+if (firebaseUser) {
+  alert("Пользователь Firebase: " + firebaseUser.email);
+
+  try {
+    await ensureUserDocExists(firebaseUser);
+    alert("Создание документа пользователя завершено");
+  } catch (error) {
+    alert(
+      "Ошибка создания пользователя:\n" +
+      error.message
+    );
+  }
+}
+
+setIsLoading(false);
+
+
+
+      /*******************/
+      
       setIsLoading(false);
     });
     return unsubscribe;
