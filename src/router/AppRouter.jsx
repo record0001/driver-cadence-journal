@@ -13,11 +13,25 @@ function RequireAuth({ children }) {
   return children;
 }
 
+function RedirectIfAuthenticated({ children }) {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <p style={{ padding: 32, textAlign: 'center' }}>Загрузка…</p>;
+  if (user) return <Navigate to="/" replace />;
+  return children;
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/login"
+          element={
+            <RedirectIfAuthenticated>
+              <LoginPage />
+            </RedirectIfAuthenticated>
+          }
+        />
         <Route
           path="/"
           element={
