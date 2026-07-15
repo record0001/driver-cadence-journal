@@ -17,6 +17,7 @@ import { combineDateAndTime, toDateInputValue, toTimeInputValue } from '../../fo
  */
 export function ShiftFormModal({ initialShift, existingShifts, onSave, onClose, onOpenFullEditPage }) {
   const base = initialShift ?? createShift();
+  const isEditing = Boolean(initialShift);
 
   const [startDate, setStartDate] = useState(toDateInputValue(base.startDateTime));
   const [startTime, setStartTime] = useState(toTimeInputValue(base.startDateTime));
@@ -25,6 +26,11 @@ export function ShiftFormModal({ initialShift, existingShifts, onSave, onClose, 
   const [drivingTime, setDrivingTime] = useState(base.drivingTime ?? '');
   const [distanceKm, setDistanceKm] = useState(base.distanceKm ?? '');
   const [note, setNote] = useState(base.note ?? '');
+
+  // Статус сохранения: 'idle' — обычная форма, 'saving' — запрос выполняется,
+  // 'success' — показать экран подтверждения, 'error' — остаться в форме с сообщением об ошибке.
+  const [saveStatus, setSaveStatus] = useState('idle');
+  const [saveError, setSaveError] = useState(null);
 
   const draftShift = useMemo(
     () => ({
@@ -40,11 +46,39 @@ export function ShiftFormModal({ initialShift, existingShifts, onSave, onClose, 
 
   const validation = validateShift(draftShift, existingShifts);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validation.isValid) return;
-    onSave(draftShift);
+    if (!validation.isValid || saveStatus === 'saving') return;
+    setSaveStatus('saving');
+    setSaveError(null);
+    try {
+      await onSave(draftShift);
+      setSaveStatus('success');
+    } catch (err) {
+      setSaveStatus('error');
+      setSaveError(err?.message || 'Не удалось сохранить смену. Проверьте соединение и попробуйте ещё раз.');
+    }
   };
+
+  if (saveStatus === 'success') {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-box__header">
+            <h2>{isEditing ? 'Изменения сохранены' : 'Смена добавлена'}</h2>
+          </div>
+          <div className="form-success">
+            <p>{isEditing ? 'Изменения успешно сохранены.' : 'Смена успешно добавлена.'}</p>
+          </div>
+          <div className="modal-box__footer">
+            <button type="button" className="btn btn-primary" onClick={onClose} autoFocus>
+              ОК
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -123,17 +157,27 @@ export function ShiftFormModal({ initialShift, existingShifts, onSave, onClose, 
             </div>
           )}
 
+          {saveStatus === 'error' && saveError && (
+            <div className="form-errors">
+              <div>{saveError}</div>
+            </div>
+          )}
+
           <div className="modal-box__footer">
             {initialShift && onOpenFullEditPage && (
-              <button type="button" className="btn" onClick={onOpenFullEditPage}>
+              <button type="button" className="btn" onClick={onOpenFullEditPage} disabled={saveStatus === 'saving'}>
                 Сложное редактирование
               </button>
             )}
-            <button type="button" className="btn" onClick={onClose}>
+            <button type="button" className="btn" onClick={onClose} disabled={saveStatus === 'saving'}>
               Отмена
             </button>
-            <button type="submit" className="btn btn-primary" disabled={!validation.isValid}>
-              Сохранить
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={!validation.isValid || saveStatus === 'saving'}
+            >
+              {saveStatus === 'saving' ? 'Сохранение…' : 'Сохранить'}
             </button>
           </div>
         </form>
