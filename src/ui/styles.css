@@ -10,6 +10,9 @@
   --color-warning-bg: #fff7ed;
   --color-warning-border: #fdba74;
   --color-warning-text: #9a3412;
+  --color-success-bg: #f0fdf4;
+  --color-success-border: #86efac;
+  --color-success-text: #166534;
   --radius: 8px;
   --spacing-1: 4px;
   --spacing-2: 8px;
@@ -345,6 +348,17 @@ button {
   padding: var(--spacing-2) var(--spacing-3);
   font-size: 13px;
   margin-bottom: var(--spacing-3);
+}
+
+.form-success {
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success-text);
+  border-radius: 6px;
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: 14px;
+  text-align: center;
+  margin: var(--spacing-3) 0;
 }
 
 .modal-box__footer {
