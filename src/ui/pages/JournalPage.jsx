@@ -55,8 +55,8 @@ export function JournalPage() {
     } else {
       await createShiftDoc(user.uid, activeCadenceId, draftShift);
     }
-    // Модалка сама покажет экран подтверждения и закроется через onClose
-    // после того, как пользователь нажмёт «ОК» — здесь форму не закрываем.
+    setIsFormOpen(false);
+    setEditingShiftId(null);
   };
 
   const handleFieldSave = async (shiftId, field, rawValue) => {
