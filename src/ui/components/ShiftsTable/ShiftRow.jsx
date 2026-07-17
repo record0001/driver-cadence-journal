@@ -51,12 +51,20 @@ export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenE
             </span>
           </div>
         ) : (
+
+      /**
+ячейка часов и км 
+      **/
       <div className="cell-two-line">
-        —5
+        —
       <span className="cell-two-line__secondary">
-          —7
+          —
       </span>
       </div>
+/**
+ячейка часов и км
+**/
+      
         )}
       </td>
       <td>
