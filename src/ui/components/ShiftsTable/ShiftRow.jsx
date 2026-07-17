@@ -51,14 +51,14 @@ export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenE
             </span>
           </div>
         ) : (
-          '—'
+          '—7'
         )}
       </td>
       <td>
         {row.isEndRow ? (
           <EditableCell
             value={row.note ?? ''}
-            displayValue={row.note || '—5'}
+            displayValue={row.note || '—'}
             disabled={readOnly}
             onSave={(v) => onFieldSave(row.shiftId, 'note', v)}
           />
