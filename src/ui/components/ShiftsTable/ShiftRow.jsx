@@ -29,7 +29,9 @@ export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenE
       <td>{row.isStartRow ? formatTime(row.startTime) : '—'}</td>
       <td>{row.isEndRow ? formatTime(row.endTime) : '—'}</td>
       <td>{row.isEndRow ? formatDuration(row.durationMinutes) : '—'}</td>
-      <td>{row.isStartRow ? formatDuration(row.restMinutes) : '—'}</td>
+      {/* Отдых относится к промежутку ПОСЛЕ этой смены — показывается в
+          конечной строке (isEndRow), а не в начальной (ROADMAP 3.5). */}
+      <td>{row.isEndRow ? formatDuration(row.restMinutes) : '—'}</td>
       <td>
         {row.isEndRow ? (
           <div className="cell-two-line">
