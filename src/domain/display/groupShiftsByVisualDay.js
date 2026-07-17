@@ -12,7 +12,10 @@ import { crossesMidnight, isShiftCompleted } from '../entities/Shift.js';
  * @property {Date|null} startTime   // выводится только если isStartRow
  * @property {Date|null} endTime     // выводится только если isEndRow
  * @property {number|null} durationMinutes // только на isEndRow (правило проекта)
- * @property {number|null} restMinutes     // только на isStartRow (отдых ПЕРЕД началом)
+ * @property {number|null} restMinutes     // отдых ПОСЛЕ этой смены, до начала следующей —
+ *                                          // показывается только на isEndRow ПРЕДЫДУЩЕЙ смены
+ *                                          // (ROADMAP 3.5). Проставляется постфактум, когда
+ *                                          // становится известна следующая смена.
  * @property {number|null} drivingTime     // показывается на "содержательной" строке (isEndRow либо единственной)
  * @property {number|null} distanceKm
  * @property {string} note
@@ -128,7 +131,18 @@ function insertMissingDays(rows) {
  * смены, пересекающие полночь, на несколько визуальных строк — без
  * изменения исходных данных (смена в БД остаётся единой сущностью).
  * Дополнительно заполняет визуальными строками-заглушками пропущенные
- * календарные дни МЕЖДУ уже существующими сменами (см. ROADMAP.md, 3.1).
+ * календарные дни МЕЖДУ уже существующими сменами (ROADMAP 3.1).
+ *
+ * Отдых между сменами (ROADMAP 3.5): значение calculateRestBetween(prevShift,
+ * shift) относится к промежутку между окончанием ПРЕДЫДУЩЕЙ смены и началом
+ * ТЕКУЩЕЙ. Визуально оно показывается в последней (конечной) строке
+ * ПРЕДЫДУЩЕЙ смены — так как именно там заканчивается "рабочий" интервал,
+ * после которого начинается отдых. Поэтому значение проставляется
+ * постфактум: пока обрабатывается текущая смена, ещё до того как для неё
+ * будут созданы собственные строки, найденное restMinutes записывается в
+ * уже отправленную в rows последнюю строку предыдущей смены. Сама формула
+ * расчёта (calculateRestBetween) не меняется — меняется только то, к какой
+ * строке привязывается уже готовое значение.
  *
  * Сортировка строго хронологическая: старые смены сверху, новые снизу.
  *
@@ -145,12 +159,23 @@ export function groupShiftsByVisualDay(shifts, overlappingShiftIds = new Set()) 
 
   sorted.forEach((shift, index) => {
     const prevShift = index > 0 ? sorted[index - 1] : null;
-    const restMinutes = calculateRestBetween(prevShift, shift);
     const durationMinutes = calculateShiftDuration(shift);
     const hasOverlapWarning = overlappingShiftIds.has(shift.id);
 
     const completed = isShiftCompleted(shift);
     const spansMultipleDays = completed && crossesMidnight(shift);
+
+    // Перед первой сменой отдыха нет (prevShift === null — пропускаем).
+    // Иначе — отдых относится к предыдущей смене и проставляется в её
+    // уже существующую последнюю строку (rows на этот момент содержит
+    // все строки предыдущей смены, но ещё не содержит строк текущей).
+    if (prevShift) {
+      const restMinutes = calculateRestBetween(prevShift, shift);
+      const prevShiftLastRow = rows[rows.length - 1];
+      if (prevShiftLastRow) {
+        prevShiftLastRow.restMinutes = restMinutes;
+      }
+    }
 
     if (!spansMultipleDays) {
       // Смена в пределах одного дня (или ещё не завершена) — одна строка.
@@ -163,7 +188,9 @@ export function groupShiftsByVisualDay(shifts, overlappingShiftIds = new Set()) 
         startTime: shift.startDateTime,
         endTime: shift.endDateTime,
         durationMinutes: completed ? durationMinutes : null,
-        restMinutes,
+        // Отдых ПОСЛЕ этой смены будет проставлен позже, при обработке
+        // следующей смены (или останется null, если смена последняя).
+        restMinutes: null,
         drivingTime: shift.drivingTime,
         distanceKm: shift.distanceKm,
         note: shift.note,
@@ -189,8 +216,10 @@ export function groupShiftsByVisualDay(shifts, overlappingShiftIds = new Set()) 
         endTime: isLastDay ? shift.endDateTime : null,
         // Длительность — строго только в строке окончания (зафиксированное правило).
         durationMinutes: isLastDay ? durationMinutes : null,
-        // Отдых относится к началу смены — показываем только на первой строке.
-        restMinutes: isFirstDay ? restMinutes : null,
+        // Отдых ПОСЛЕ этой смены будет проставлен позже, при обработке
+        // следующей смены — и попадёт именно в последнюю (isLastDay) строку,
+        // так как rows[rows.length - 1] на тот момент указывает на неё.
+        restMinutes: null,
         // Время за рулём / км / примечание — ручные поля всей смены,
         // показываем на итоговой (последней) строке, чтобы не дублировать.
         drivingTime: isLastDay ? shift.drivingTime : null,
