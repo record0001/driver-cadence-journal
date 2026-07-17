@@ -5,7 +5,13 @@ import { useShifts } from '../../data/hooks/useShifts.js';
 import { updateShiftDoc } from '../../data/repositories/shiftsRepository.js';
 import { validateShift } from '../../domain/validators/shiftValidator.js';
 import { AppShell } from '../layout/AppShell.jsx';
-import { combineDateAndTime, toDateInputValue, toTimeInputValue } from '../formatters.js';
+import {
+  combineDateAndTime,
+  toDateInputValue,
+  toTimeInputValue,
+  minutesToTimeInputValue,
+  timeInputValueToMinutes,
+} from '../formatters.js';
 
 /**
  * Полноценная страница редактирования — используется для сложных случаев
@@ -23,7 +29,7 @@ export function ShiftEditPage() {
   const [startTime, setStartTime] = useState('');
   const [endDate, setEndDate] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [drivingTime, setDrivingTime] = useState('');
+  const [drivingTime, setDrivingTime] = useState(null);
   const [distanceKm, setDistanceKm] = useState('');
   const [note, setNote] = useState('');
   const [initialized, setInitialized] = useState(false);
@@ -33,7 +39,7 @@ export function ShiftEditPage() {
     setStartTime(toTimeInputValue(shift.startDateTime));
     setEndDate(toDateInputValue(shift.endDateTime));
     setEndTime(toTimeInputValue(shift.endDateTime));
-    setDrivingTime(shift.drivingTime ?? '');
+    setDrivingTime(shift.drivingTime ?? null);
     setDistanceKm(shift.distanceKm ?? '');
     setNote(shift.note ?? '');
     setInitialized(true);
@@ -44,7 +50,7 @@ export function ShiftEditPage() {
       id: shiftId,
       startDateTime: combineDateAndTime(startDate, startTime),
       endDateTime: combineDateAndTime(endDate, endTime),
-      drivingTime: drivingTime === '' ? null : Number(drivingTime),
+      drivingTime,
       distanceKm: distanceKm === '' ? null : Number(distanceKm),
       note,
     }),
@@ -110,8 +116,12 @@ export function ShiftEditPage() {
 
           <div className="form-row">
             <div className="form-field">
-              <label>Время за рулём (минуты)</label>
-              <input type="number" min="0" value={drivingTime} onChange={(e) => setDrivingTime(e.target.value)} />
+              <label>Время за рулём</label>
+              <input
+                type="time"
+                value={minutesToTimeInputValue(drivingTime)}
+                onChange={(e) => setDrivingTime(timeInputValueToMinutes(e.target.value))}
+              />
             </div>
             <div className="form-field">
               <label>Километраж</label>
