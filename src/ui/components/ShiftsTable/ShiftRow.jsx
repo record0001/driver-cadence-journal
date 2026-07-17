@@ -56,11 +56,9 @@ export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenE
 ячейка часов и км 
       **/
       <div className="cell-two-line">
-        —
-      <span className="cell-two-line__secondary">
-          —
-      </span>
-      </div>
+  <span>—</span>
+  <span className="cell-two-line__secondary">—</span>
+</div>
 /**
 ячейка часов и км
 **/
