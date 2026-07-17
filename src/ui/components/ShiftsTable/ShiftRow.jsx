@@ -68,16 +68,20 @@ export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenE
       </td>
       {!readOnly && (
         <td>
-          <div className="row-actions">
-            <button className="btn" onClick={() => onOpenEdit(row.shiftId)}>
-              Изменить
-            </button>
-            {canDelete && (
-              <button className="btn btn-danger" onClick={() => onDelete(row.shiftId)}>
-                Удалить
+          {row.isGapDay ? (
+            '—'
+          ) : (
+            <div className="row-actions">
+              <button className="btn" onClick={() => onOpenEdit(row.shiftId)}>
+                Изменить
               </button>
-            )}
-          </div>
+              {canDelete && (
+                <button className="btn btn-danger" onClick={() => onDelete(row.shiftId)}>
+                  Удалить
+                </button>
+              )}
+            </div>
+          )}
         </td>
       )}
     </tr>
