@@ -5,7 +5,7 @@ import { crossesMidnight, isShiftCompleted } from '../entities/Shift.js';
 /**
  * @typedef {Object} ShiftDisplayRow
  * @property {string} rowId          // уникальный ключ строки (для React key)
- * @property {string} shiftId        // id исходной смены (для редактирования/удаления)
+ * @property {string|null} shiftId   // id исходной смены (null для строк-заглушек пропущенных дней)
  * @property {Date} date             // календарный день, к которому относится строка
  * @property {boolean} isStartRow    // в этой строке показывается время начала
  * @property {boolean} isEndRow      // в этой строке показывается время окончания
@@ -17,6 +17,7 @@ import { crossesMidnight, isShiftCompleted } from '../entities/Shift.js';
  * @property {number|null} distanceKm
  * @property {string} note
  * @property {boolean} hasOverlapWarning
+ * @property {boolean} [isGapDay]    // true = визуальная строка-заглушка пропущенного дня (нет реальной смены)
  */
 
 /**
@@ -39,9 +40,95 @@ function enumerateDays(start, end) {
 }
 
 /**
+ * Нормализует дату к началу календарного дня. Используется только для
+ * СРАВНЕНИЯ дат при поиске пропущенных дней — не используется для
+ * отображения и не мутирует исходные объекты Date строк.
+ * @param {Date} date
+ * @returns {Date}
+ */
+function startOfDay(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/**
+ * Разница между двумя датами в целых календарных днях (b - a).
+ * @param {Date} a
+ * @param {Date} b
+ * @returns {number}
+ */
+function diffInCalendarDays(a, b) {
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  return Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / MS_PER_DAY);
+}
+
+/**
+ * Создаёт визуальную строку-заглушку для календарного дня, в котором нет
+ * ни одной реальной смены. НЕ создаёт Shift, ничего не пишет в Firestore —
+ * это чисто отображаемый объект той же формы ShiftDisplayRow.
+ * @param {Date} date
+ * @returns {ShiftDisplayRow}
+ */
+function createGapRow(date) {
+  return {
+    rowId: `gap-${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`,
+    shiftId: null,
+    date,
+    isStartRow: false,
+    isEndRow: false,
+    startTime: null,
+    endTime: null,
+    durationMinutes: null,
+    restMinutes: null,
+    drivingTime: null,
+    distanceKm: null,
+    note: '',
+    hasOverlapWarning: false,
+    isGapDay: true,
+  };
+}
+
+/**
+ * Вставляет строки-заглушки пропущенных календарных дней СТРОГО между уже
+ * существующими визуальными строками (не добавляет дни до первой и после
+ * последней строки). Работает над уже готовым, хронологически
+ * отсортированным списком строк — не трогает исходные Shift и не влияет
+ * на порядок реальных строк.
+ * @param {ShiftDisplayRow[]} rows
+ * @returns {ShiftDisplayRow[]}
+ */
+function insertMissingDays(rows) {
+  if (rows.length < 2) return rows;
+
+  const result = [rows[0]];
+
+  for (let i = 1; i < rows.length; i += 1) {
+    const prevRow = rows[i - 1];
+    const currentRow = rows[i];
+    const dayGap = diffInCalendarDays(prevRow.date, currentRow.date);
+
+    // dayGap === 1 — соседние дни, разрыва нет.
+    // dayGap <= 0 — тот же день или смены идут не по возрастанию дат
+    // (например, пересекающиеся смены) — заглушки не нужны и не вставляются.
+    for (let offset = 1; offset < dayGap; offset += 1) {
+      const gapDate = startOfDay(prevRow.date);
+      gapDate.setDate(gapDate.getDate() + offset);
+      result.push(createGapRow(gapDate));
+    }
+
+    result.push(currentRow);
+  }
+
+  return result;
+}
+
+/**
  * Преобразует плоский список смен в список строк для таблицы, разбивая
  * смены, пересекающие полночь, на несколько визуальных строк — без
  * изменения исходных данных (смена в БД остаётся единой сущностью).
+ * Дополнительно заполняет визуальными строками-заглушками пропущенные
+ * календарные дни МЕЖДУ уже существующими сменами (см. ROADMAP.md, 3.1).
  *
  * Сортировка строго хронологическая: старые смены сверху, новые снизу.
  *
@@ -114,5 +201,5 @@ export function groupShiftsByVisualDay(shifts, overlappingShiftIds = new Set()) 
     });
   });
 
-  return rows;
+  return insertMissingDays(rows);
 }
