@@ -58,7 +58,7 @@ export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenE
         {row.isEndRow ? (
           <EditableCell
             value={row.note ?? ''}
-            displayValue={row.note || '—'}
+            displayValue={row.note || '—5'}
             disabled={readOnly}
             onSave={(v) => onFieldSave(row.shiftId, 'note', v)}
           />
