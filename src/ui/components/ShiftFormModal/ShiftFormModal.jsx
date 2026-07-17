@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react';
 import { validateShift } from '../../../domain/validators/shiftValidator.js';
 import { createShift } from '../../../domain/entities/Shift.js';
-import { combineDateAndTime, toDateInputValue, toTimeInputValue } from '../../formatters.js';
+import {
+  combineDateAndTime,
+  toDateInputValue,
+  toTimeInputValue,
+  minutesToTimeInputValue,
+  timeInputValueToMinutes,
+} from '../../formatters.js';
 
 /**
  * Модальное окно — основной способ добавления и редактирования смены.
@@ -22,7 +28,7 @@ export function ShiftFormModal({ initialShift, existingShifts, onSave, onClose, 
   const [startTime, setStartTime] = useState(toTimeInputValue(base.startDateTime));
   const [endDate, setEndDate] = useState(toDateInputValue(base.endDateTime));
   const [endTime, setEndTime] = useState(toTimeInputValue(base.endDateTime));
-  const [drivingTime, setDrivingTime] = useState(base.drivingTime ?? '');
+  const [drivingTime, setDrivingTime] = useState(base.drivingTime ?? null);
   const [distanceKm, setDistanceKm] = useState(base.distanceKm ?? '');
   const [note, setNote] = useState(base.note ?? '');
 
@@ -31,7 +37,7 @@ export function ShiftFormModal({ initialShift, existingShifts, onSave, onClose, 
       id: base.id,
       startDateTime: combineDateAndTime(startDate, startTime),
       endDateTime: combineDateAndTime(endDate, endTime),
-      drivingTime: drivingTime === '' ? null : Number(drivingTime),
+      drivingTime,
       distanceKm: distanceKm === '' ? null : Number(distanceKm),
       note,
     }),
@@ -81,13 +87,11 @@ export function ShiftFormModal({ initialShift, existingShifts, onSave, onClose, 
 
           <div className="form-row">
             <div className="form-field">
-              <label>Время за рулём (минуты)</label>
+              <label>Время за рулём</label>
               <input
-                type="number"
-                min="0"
-                placeholder="напр. 450"
-                value={drivingTime}
-                onChange={(e) => setDrivingTime(e.target.value)}
+                type="time"
+                value={minutesToTimeInputValue(drivingTime)}
+                onChange={(e) => setDrivingTime(timeInputValueToMinutes(e.target.value))}
               />
             </div>
             <div className="form-field">
