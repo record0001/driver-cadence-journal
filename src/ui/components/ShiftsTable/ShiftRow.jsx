@@ -51,7 +51,9 @@ export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenE
             </span>
           </div>
         ) : (
+      <span className="cell-two-line__secondary">
           '—7'
+      </span>
         )}
       </td>
       <td>
