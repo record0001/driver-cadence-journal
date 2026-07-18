@@ -36,8 +36,8 @@ export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenE
         {row.isEndRow ? (
           <div className="cell-two-line">
             <EditableCell
-              value={row.drivingTime ?? ''}
-              displayValue={row.drivingTime !== null ? formatDuration(row.drivingTime) : '—'}
+              value={row.drivingTime ? row.drivingTime : ''}
+              displayValue={row.drivingTime ? formatDuration(row.drivingTime) : '—'}
               type="number"
               disabled={readOnly}
               onSave={(v) => onFieldSave(row.shiftId, 'drivingTime', v)}
