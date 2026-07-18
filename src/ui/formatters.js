@@ -64,18 +64,22 @@ export function combineDateAndTime(dateStr, timeStr) {
  * toTimeInputValue(date). Хранение drivingTime в Firestore/domain остаётся
  * числом минут, конвертация нужна только на границе UI.
  *
+ * Продуктовое правило: 0 трактуется как "время не введено" — поле в форме
+ * показывается пустым, а не "00:00", чтобы визуально не путать "ввёл ноль"
+ * и "ничего не вводил".
+ *
  * Ограничение платформы: нативный <input type="time"> поддерживает только
  * диапазон 00:00–23:59, то есть максимум 1439 минут. Значения свыше суток
  * (если такие когда-либо были сохранены через старый number-инпут) не могут
  * быть корректно отображены в этом контроле.
  *
  * @param {number|null} totalMinutes
- * @returns {string} "HH:MM" либо '' если значение отсутствует/некорректно
+ * @returns {string} "HH:MM" либо '' если значение отсутствует/равно нулю/некорректно
  */
 export function minutesToTimeInputValue(totalMinutes) {
   if (totalMinutes === null || totalMinutes === undefined || totalMinutes === '') return '';
   const minutesNum = Number(totalMinutes);
-  if (Number.isNaN(minutesNum) || minutesNum < 0) return '';
+  if (Number.isNaN(minutesNum) || minutesNum <= 0) return '';
   const hours = Math.floor(minutesNum / 60);
   const minutes = Math.floor(minutesNum % 60);
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
@@ -84,8 +88,12 @@ export function minutesToTimeInputValue(totalMinutes) {
 /**
  * Обратное преобразование: значение <input type="time"> ("HH:MM") → число минут.
  * Используется для drivingTime вместо Number(value) при обычном number-инпуте.
+ *
+ * Продуктовое правило: "00:00" трактуется как "время не введено" → null,
+ * а не 0 — симметрично minutesToTimeInputValue.
+ *
  * @param {string} value "HH:MM"
- * @returns {number|null} null, если поле пустое (аналогично прежнему поведению '' → null)
+ * @returns {number|null} null, если поле пустое или равно "00:00"
  */
 export function timeInputValueToMinutes(value) {
   if (!value) return null;
@@ -93,5 +101,6 @@ export function timeInputValueToMinutes(value) {
   const hours = Number(hoursStr);
   const minutes = Number(minutesStr);
   if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
-  return hours * 60 + minutes;
+  const totalMinutes = hours * 60 + minutes;
+  return totalMinutes === 0 ? null : totalMinutes;
 }
