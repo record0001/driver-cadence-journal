@@ -10,6 +10,7 @@
   --color-warning-bg: #fff7ed;
   --color-warning-border: #fdba74;
   --color-warning-text: #9a3412;
+  --color-weekend-bg: #fdf2f4;
   --radius: 8px;
   --spacing-1: 4px;
   --spacing-2: 8px;
@@ -216,6 +217,19 @@ button {
 
 .row-overlap {
   background: var(--color-warning-bg) !important;
+}
+
+/* Лёгкая ненавязчивая подсветка строк субботы/воскресенья (в т.ч. gap-day).
+   Приоритет предупреждения о пересечении (.row-overlap, !important) сохраняется. */
+.row-weekend {
+  background: var(--color-weekend-bg);
+}
+
+/* Липкая колонка даты задаёт собственный фон (см. .shifts-table td.col-date
+   выше) и перекрывает фон строки — дублируем подсветку явно для неё,
+   иначе первая колонка "выпадает" из подсветки при горизонтальном скролле. */
+.row-weekend td.col-date {
+  background: var(--color-weekend-bg);
 }
 
 .overlap-badge {

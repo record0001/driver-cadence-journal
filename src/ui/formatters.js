@@ -19,6 +19,21 @@ export function formatWeekday(date) {
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
 
+/**
+ * Определяет, приходится ли дата на субботу или воскресенье.
+ * Используется только для визуального оформления строк таблицы
+ * (лёгкая подсветка выходных) — не является бизнес-правилом и не
+ * участвует ни в одном domain-расчёте.
+ *
+ * @param {Date|null} date
+ * @returns {boolean}
+ */
+export function isWeekend(date) {
+  if (!date) return false;
+  const day = date.getDay(); // 0 = воскресенье, 6 = суббота (стандарт JS)
+  return day === 0 || day === 6;
+}
+
 export function formatTime(date) {
   return date ? TIME_FORMATTER.format(date) : '—';
 }
