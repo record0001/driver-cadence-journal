@@ -1,4 +1,4 @@
-import { formatDate, formatWeekday, formatTime } from '../../formatters.js';
+import { formatDate, formatWeekday, formatTime, isWeekend } from '../../formatters.js';
 import { formatDuration } from '../../../domain/calculations/formatDuration.js';
 import { EditableCell } from './EditableCell.jsx';
 
@@ -14,8 +14,17 @@ import { EditableCell } from './EditableCell.jsx';
  * }} props
  */
 export function ShiftRow({ row, index, readOnly, canDelete, onFieldSave, onOpenEdit, onDelete }) {
+  // Подсветка выходных — чисто визуальный признак на основе row.date,
+  // которое уже присутствует в любой строке (включая gap-day заглушки).
+  // Предупреждение о пересечении (row-overlap) имеет приоритет и задаёт
+  // фон через !important — конфликта с row-weekend нет.
+  const rowClassName =
+    [row.hasOverlapWarning ? 'row-overlap' : null, isWeekend(row.date) ? 'row-weekend' : null]
+      .filter(Boolean)
+      .join(' ') || undefined;
+
   return (
-    <tr className={row.hasOverlapWarning ? 'row-overlap' : undefined}>
+    <tr className={rowClassName}>
       <td>{index + 1}</td>
       <td className="col-date">
         {formatDate(row.date)}
