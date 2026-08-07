@@ -155,8 +155,6 @@ button {
 /* ---- Таблица смен ---- */
 .table-scroll {
   overflow-x: auto;
-  overflow-y: auto;
-  max-height: 70vh;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
@@ -179,11 +177,6 @@ button {
   color: var(--color-text-muted);
   border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
-  /* Фиксация шапки при вертикальной прокрутке. Sticky-контекст —
-     .table-scroll (собственный overflow-y), а не страница. */
-  position: sticky;
-  top: 0;
-  z-index: 3;
 }
 
 .shifts-table td {
@@ -202,21 +195,13 @@ button {
   position: sticky;
   left: 0;
   background: var(--color-surface);
-  /* Тело: sticky-колонка «Дата» должна быть НИЖЕ sticky-шапки (z-index: 3
-     у .shifts-table th), иначе при вертикальной прокрутке ячейки даты
-     будут перекрывать собой заголовки колонок в области стыка. */
-  z-index: 2;
+  z-index: 5;
   box-shadow: 1px 0 0 var(--color-border);
 }
 
 .shifts-table th.col-date {
-  /* Угловая ячейка «Дата»: одновременно sticky по вертикали (унаследовано
-     от .shifts-table th, top: 0) и по горизонтали (left: 0, выше). Должна
-     быть выше и обычной шапки (z-index: 3), и обычной sticky-колонки
-     (z-index: 2) — это единственная ячейка, зафиксированная в обоих
-     направлениях сразу. */
   background: var(--color-bg);
-  z-index: 4;
+  z-index: 6;
 }
 
 .cell-two-line {
