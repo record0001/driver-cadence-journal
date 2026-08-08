@@ -456,4 +456,15 @@ button {
   .summary-bar {
     gap: var(--spacing-4);
   }
+  /* Уменьшение шрифта ShiftsTable ТОЛЬКО для обычного мобильного layout
+     (viewport <= 640px). В режиме "Версия для ПК" браузер отдаёт более
+     широкий layout viewport (обычно ~980px+), поэтому это правило туда
+     не попадает и desktop-размер шрифта там сохраняется без дополнительных
+     ухищрений. padding и line-height намеренно не изменены. */
+  .shifts-table {
+    font-size: 12px;
+  }
+  .shifts-table th {
+    font-size: 10px;
+  }
 }
