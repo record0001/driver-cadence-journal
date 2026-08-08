@@ -462,9 +462,9 @@ button {
      не попадает и desktop-размер шрифта там сохраняется без дополнительных
      ухищрений. padding и line-height намеренно не изменены. */
   .shifts-table {
-    font-size: 12px;
+    font-size: 11px;
   }
   .shifts-table th {
-    font-size: 10px;
+    font-size: 9px;
   }
 }
